@@ -1,8 +1,12 @@
-const ConnectionManager = require('./connectionManager');
 const cheerio = require('cheerio');
+const fs = require('fs');
+const ConnectionManager = require('./connectionManager');
 
 const connectionManager = new ConnectionManager();
-let parsedURLs = [], newURLs = [];
+
+let urlPool = [], processedUrls = [];
+
+let processedIndex = 0;
 
 const addNewUrls = function(html) {
     const $ = cheerio.load(html);
@@ -10,39 +14,46 @@ const addNewUrls = function(html) {
     $('a' ).each(function () {
         let href = $(this).attr('href');
 
-        if(parsedURLs.indexOf(href) < 0) {
-            const pat = /^https?:\/\//i;
-            if (!pat.test(href)) { // for relative urls
-                href = `https://www.w3schools.com/${href}`;
-            }
-            newURLs.push(href);
+        if(processedUrls.indexOf(href) < 0) {
+
+            urlPool.push(href);
         }
     });
+    scrape();
 };
 
+const writeUrlsToCsv = () => {
+    for (let i = 0; i < processedIndex; i++) {
+        fs.appendFile('scrape_without_async.csv', `${urlPool[i]}\n`, (error) => {
+            if (error) console.log('File Error: ', error);
+        });
+    }
+};
+
+
 const scrape = () => {
-    if (newURLs.length <= 0) {
-        // breaking condition for recursion
-        // console.log('processed urls size: ', parsedURLs.length);
+    const currentProcessing = urlPool.slice(processedIndex);
+    if (currentProcessing.length <= 0) {
+        // handles the condition when no urls are left
+        writeUrlsToCsv();
     } else {
-        for (let i = 0; i < newURLs.length; i++) {
-            const url = newURLs.shift();
-            parsedURLs.push(url);
-            i--;
-            
+        for (let i = 0, len = currentProcessing.length; i < len; i++) {
+            const url = currentProcessing[i];
+            processedUrls.push(url);
+            processedIndex++;
+
             connectionManager.createConnection(url, (html) => {
                 addNewUrls(html);
-                scrape();
             }, (error) => {
                 console.log('Error occurred: ', error);
-                scrape();
-            })
+            });
         }
+        writeUrlsToCsv();
     }
 };
 
 const scrapeWithoutAsync = () => {
-    newURLs.push("https://www.w3schools.com/");
+    urlPool.push("https://medium.com/");
     scrape();
 };
 
