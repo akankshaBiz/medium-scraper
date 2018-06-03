@@ -20,7 +20,7 @@ class ConnectionManager {
         } else {
             this.connectionCount++;
             request.get(url, (error, response, html) => {
-                if (error) err(error);
+                if (error) return err(error);
 
                 this.notifyCompletion(callback, err);
                 callback(html);
