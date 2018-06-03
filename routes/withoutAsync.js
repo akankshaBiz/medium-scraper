@@ -1,9 +1,11 @@
-import express from 'express';
+const express = require('express');
+const scrapeWithoutAsync = require('../scrapeWithoutAsync');
 
 const router = express.Router();
 
 router.get('/', (req, res) => {
-    /* to-do */
+    res.end('generating csv fle....');
+    scrapeWithoutAsync();
 });
 
-export default router;
+module.exports = router;
