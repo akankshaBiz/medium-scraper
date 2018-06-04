@@ -12,6 +12,10 @@ const addNewUrls = function(html) {
 
     $('a' ).each(function () {
         let href = $(this).attr('href');
+        const pat = /^https?:\/\//i;
+        if (!pat.test(href)) {
+            href = `https://www.medium.com${href}`;
+        }
         if(processedUrls.indexOf(href) < 0) {
             urlPool.push(href);
         }
@@ -20,11 +24,18 @@ const addNewUrls = function(html) {
 };
 
 const writeUrlsToCsv = () => {
-    for (let i = 0; i < processedIndex; i++) {
-        fs.appendFile('scrape_with_async.csv', `${urlPool[i]}\n`, (error) => {
+    const write = function () {
+        if(index == processedIndex)return;
+        fs.appendFile('scrape_with_async.csv', `${urlPool[index]}\n`, (error) => {
             if (error) console.log('File Error: ', error);
+            else {
+                index ++;
+                write();
+            }
         });
-    }
+    };
+    let index = 0;
+    write();
 };
 
 const getUrls = (url, callback) => {
